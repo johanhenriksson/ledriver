@@ -126,8 +126,16 @@ func (d *Driver) readLine() string {
 }
 
 func (d *Driver) readAck() {
+    fmt.Println("waiting for ack")
     b := d.readByte()
     if b != 0x01 {
+        if b == 0xF0 {
+            // seems to be a leftover init message
+            fmt.Println("0xF0")
+            fmt.Printf("%x\n",d.readByte())
+            fmt.Print("Leftover data:", d.readLine())
+            return
+        }
         if b == 0xFF {
             // read error message
             panic(fmt.Sprintf("Driver error: %s", d.readLine()))

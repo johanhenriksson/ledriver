@@ -11,7 +11,7 @@ import (
 
 const (
     SERIAL_RATE = 250000
-    MAX_FPS = 30
+    MAX_FPS = 60
 )
 
 func main() {
@@ -25,6 +25,7 @@ func main() {
     screen := led.NewScreen(driver, 2, 10, 10)
     frame_time := time.Second / MAX_FPS
 
+    return
     start := time.Now()
     frames := 500
     i := 0
