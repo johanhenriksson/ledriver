@@ -18,7 +18,7 @@ func NewScreen(driver *Driver, index, width, height int) *Screen {
         driver: driver,
         buffer: make([]Color, width * height),
     }
-    driver.Setup(index, width * height)
+    driver.Setup(index, width, height, 3, 2)
     s.Clear(Color{0,0,0,1})
     return s
 }

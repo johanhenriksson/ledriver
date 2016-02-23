@@ -41,14 +41,20 @@ func NewDriver(id, rate int) *Driver {
         Rate: rate,
     }
 
-    // read init message
-    fmt.Printf("Connected to controller: %s\n", d.readLine())
+    d.readInit()
 
     return d
 }
 
-func (d *Driver) Setup(id, leds int) {
-    m := []byte { MSG_SETUP, byte(id), byte(leds) }
+func (d *Driver) Setup(id, width, height, array_width, array_height int) {
+    m := []byte {
+        MSG_SETUP,
+        byte(id),
+        byte(width),
+        byte(height),
+        byte(array_width),
+        byte(array_height),
+    }
     d.Serial.Write(m)
     d.readAck()
 }
@@ -119,11 +125,6 @@ func (d *Driver) readLine() string {
     return string(buf[:i])
 }
 
-func (d *Driver) Fail() {
-    d.Serial.Write([]byte { 100, 100 })
-    d.readAck()
-}
-
 func (d *Driver) readAck() {
     b := d.readByte()
     if b != 0x01 {
@@ -133,4 +134,14 @@ func (d *Driver) readAck() {
         }
         panic(fmt.Sprintf("Ack failed. Read %X", b))
     }
+}
+
+func (d *Driver) readInit() {
+    // skip any trash
+    var b, lb byte
+    for !(b == 0xFA && lb == 0xF0) {
+        lb = b
+        b = d.readByte()
+    }
+    fmt.Print("<<", d.readLine())
 }

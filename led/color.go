@@ -1,5 +1,11 @@
 package led
 
+import (
+    "fmt"
+    "os"
+    "image"
+)
+
 type Color struct {
     R, G, B, A float32
 }
@@ -11,10 +17,64 @@ type outputColor struct {
 
 func (c Color) Output() outputColor {
     return outputColor {
-        gamma_table[int(c.R * 255.99)],
-        gamma_table[int(c.G * 255.99)],
-        gamma_table[int(c.B * 255.99)],
+        gamma_table[int(c.R * c.A * 255.99)],
+        gamma_table[int(c.G * c.A * 255.99)],
+        gamma_table[int(c.B * c.A * 255.99)],
     }
+}
+
+// stolen from https://github.com/bthomson/go-color
+func FromHSL(h, s, l float32) Color {
+    if s == 0 {
+        // it's gray
+        return Color{l, l, l, 1}
+    }
+
+    var v1, v2 float32
+    if l < 0.5 {
+        v2 = l * (1 + s)
+    } else {
+        v2 = (l + s) - (s * l)
+    }
+
+    v1 = 2*l - v2
+
+    r := hueToRGB(v1, v2, h+(1.0/3.0))
+    g := hueToRGB(v1, v2, h)
+    b := hueToRGB(v1, v2, h-(1.0/3.0))
+
+    return Color {r, g, b, 1}
+}
+
+// stolen from https://github.com/bthomson/go-color
+func hueToRGB(v1, v2, h float32) float32 {
+    if h < 0 {
+        h += 1
+    }
+    if h > 1 {
+        h -= 1
+    }
+    switch {
+    case 6*h < 1:
+        return (v1 + (v2-v1)*6*h)
+    case 2*h < 1:
+        return v2
+    case 3*h < 2:
+        return v1 + (v2-v1)*((2.0/3.0)-h)*6
+    }
+    return v1
+}
+
+func LoadImageColors(file string) {
+    imgFile, err := os.Open(file)
+    if err != nil {
+        panic(fmt.Sprintf("Cannot open image %s: %s\n", file, err))
+    }
+    img, _, err := image.Decode(imgFile)
+    if err != nil {
+        panic(fmt.Sprintf("Cannot decode image %s: %s\n", file, err))
+    }
+    img.At(0,0)
 }
 
 var gamma_table []byte = []byte {
