@@ -24,7 +24,7 @@ func main() {
     dev2, _ := reader.ReadString('\n')
     */
 
-    driver := led.NewDriver("/dev/ttyACM0")
+    driver := led.NewDriver("/dev/tty.usbmodem1421")
     //driver2 := led.NewDriver("/dev/ttyUSB4")
 
     count := 128
