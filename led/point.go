@@ -1,6 +1,6 @@
 package led
 
-type Point struct {
+type Vec struct {
     X byte
     Y byte
 }

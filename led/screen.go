@@ -9,7 +9,7 @@ type Screen struct {
     driver     *Driver
 }
 
-func NewScreen(driver *Driver, index, width, height int) *Screen {
+func NewScreen(driver *Driver, index, width, height, array_width, array_height int) *Screen {
     s := &Screen {
         Index:  index,
         Width:  width,
@@ -18,7 +18,7 @@ func NewScreen(driver *Driver, index, width, height int) *Screen {
         driver: driver,
         buffer: make([]Color, width * height),
     }
-    driver.Setup(index, width, height, 3, 2)
+    driver.Setup(index, width, height, array_width, array_height)
     s.Clear(Color{0,0,0,1})
     return s
 }
@@ -35,11 +35,11 @@ func (s *Screen) Flip() {
     s.driver.SetPixels(0, s.buffer, true)
 }
 
-func (s *Screen) Set(pos Point, color Color) {
+func (s *Screen) Set(pos Vec, color Color) {
     s.buffer[s.index(pos)] = color
 }
 
-func (s *Screen) index(point Point) int {
+func (s *Screen) index(point Vec) int {
     x := int(point.X)
     if point.Y % 2 == 1 {
         x = s.Width - x - 1

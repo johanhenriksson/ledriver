@@ -38,7 +38,6 @@ void state_save(t_screen_state* state) {
 
 // attempt to load from eeprom
 bool state_load(t_screen_state* state) {
-  return false;
   int has_state = EEPROM.read(ROM_HAS_STATE);
   if (has_state) {
     rom_read(ROM_STATE, sizeof(t_screen_state), state);

@@ -8,10 +8,13 @@ char error_msg_buffer[ERROR_BUFFER_SIZE];
 
 void initSerial() {
   Serial.begin(SERIAL_RATE);
-  Serial.write(0xF0); // magic bytes
-  Serial.write(0xFA);
-  Serial.println(DRIVER_VERSION); // version string
-  Serial.flush();
+
+  // clear input
+  while(Serial.available() > 0) {
+    Serial.read();
+  }
+  
+  handshake();  
 }
 
 // blocks until a byte is available on the serial connection, then returns it
@@ -27,6 +30,13 @@ byte mustRead() {
 // write ack message
 void ack() {
   Serial.write(MSG_ACK);
+  Serial.flush();
+}
+
+void handshake() {
+  Serial.write(0xF0); // magic bytes
+  Serial.write(0xFA);
+  //Serial.println(DRIVER_VERSION); // version string
   Serial.flush();
 }
 

@@ -2,14 +2,18 @@ package led
 
 import (
     "fmt"
-    "github.com/distributed/sers"
+    "github.com/tarm/serial"
 )
 
 const (
     READ_BUFFER_SIZE = 64
-    DEVICE_STRING = "/dev/cu.usbmodemfd%d"
+    SERIAL_RATE = 115200
 
     // messages
+    MSG_START       byte = 0x02
+    MSG_END         byte = 0x03
+    MSG_HELLO       byte = 0xF0
+
     MSG_SETUP       byte = 0x01
     MSG_FLIP_BUFFER byte = 0x02
     MSG_SET_PIXELS  byte = 0x10
@@ -17,66 +21,74 @@ const (
 
 // represents a serial connection to the microcontroller
 type Driver struct {
-    Serial  sers.SerialPort
-    Rate    int
+    Serial  *serial.Port
+    Name    string
 }
 
-func NewDriver(id, rate int) *Driver {
+func NewDriver(device string) *Driver {
+    conf := &serial.Config {
+        Name: device,
+        Baud: SERIAL_RATE,
+    }
+
     // open serial connection
-    con, err := sers.Open(fmt.Sprintf(DEVICE_STRING, id))
+    con, err := serial.OpenPort(conf)
     if err != nil {
         panic(fmt.Sprintf("Cannot open serial port: %s\n", err))
     }
 
-    // set connection mode
-    err = con.SetMode(rate, 8, sers.N, 2, sers.RTSCTS_HANDSHAKE)
-    if err != nil {
-        panic(fmt.Sprintf("Cannot set mode: %s\n", err))
-    }
-
-    fmt.Printf("Serial connection opened\n")
+    fmt.Println("Opened", device)
 
     d := &Driver {
+        Name: device,
         Serial: con,
-        Rate: rate,
     }
 
     d.readInit()
+
+    fmt.Println("Device", device, "initialized")
 
     return d
 }
 
 func (d *Driver) Setup(id, width, height, array_width, array_height int) {
     m := []byte {
+        MSG_START,
         MSG_SETUP,
         byte(id),
         byte(width),
         byte(height),
         byte(array_width),
         byte(array_height),
+        MSG_END,
     }
     d.Serial.Write(m)
     d.readAck()
 }
 
 func (d *Driver) Show() {
-    m := []byte { MSG_FLIP_BUFFER }
+    m := []byte { 
+        MSG_START,
+        MSG_FLIP_BUFFER,
+        MSG_END,
+    }
     d.Serial.Write(m)
     d.readAck()
 }
 
 // Write pixel data to the controller
 func (d *Driver) SetPixels(start int, data []Color, auto_show bool) {
-    const header_length = 4
+    const header_length = 5
     index := byte(start)
     count := byte(len(data))
     m := make([]byte, header_length + 3 * int(count) + 1)
 
     // header
-    m[0] = MSG_SET_PIXELS
-    if auto_show { m[1] = 1 }
-    m[2] = index
-    m[3] = count
+    m[0] = MSG_START
+    m[1] = MSG_SET_PIXELS
+    if auto_show { m[2] = 1 }
+    m[3] = index
+    m[4] = count
 
     // pixel data payload
     i := header_length
@@ -89,7 +101,7 @@ func (d *Driver) SetPixels(start int, data []Color, auto_show bool) {
     }
 
     // end
-    m[i] = 0xFF
+    m[i] = MSG_END
 
     d.Serial.Write(m)
     d.readAck()
@@ -126,14 +138,11 @@ func (d *Driver) readLine() string {
 }
 
 func (d *Driver) readAck() {
-    fmt.Println("waiting for ack")
     b := d.readByte()
     if b != 0x01 {
         if b == 0xF0 {
             // seems to be a leftover init message
-            fmt.Println("0xF0")
-            fmt.Printf("%x\n",d.readByte())
-            fmt.Print("Leftover data:", d.readLine())
+            d.readByte()
             return
         }
         if b == 0xFF {
@@ -145,11 +154,20 @@ func (d *Driver) readAck() {
 }
 
 func (d *Driver) readInit() {
+    /*
+    d.Serial.Write([]byte {
+        MSG_START,
+        MSG_HELLO,
+        MSG_END,
+    })
+    fmt.Println("Wrote handshake")
+    */
+
     // skip any trash
     var b, lb byte
     for !(b == 0xFA && lb == 0xF0) {
         lb = b
         b = d.readByte()
+        fmt.Printf("Byte %x\n", b)
     }
-    fmt.Print("<<", d.readLine())
 }

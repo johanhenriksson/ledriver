@@ -15,6 +15,14 @@ type outputColor struct {
     R, G, B byte
 }
 
+func (c Color) Scale(f float32) Color {
+    return Color {
+        R: c.R * f,
+        G: c.G * f,
+        B: c.B * f,
+        A: c.A * f,
+    }
+}
 func (c Color) Output() outputColor {
     return outputColor {
         gamma_table[int(c.R * c.A * 255.99)],
