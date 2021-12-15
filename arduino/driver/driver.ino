@@ -1,30 +1,18 @@
 #include <FastLED.h>
-#include <EEPROM.h>
 
 #include "common.h"
 #include "serial.h"
-#include "state.h"
-#include "display.h"
 
 void clear();
-void indentify();
 void flip_buffer();
 void setupLeds(int count);
 
 // globals
 CRGB leds[MAX_LEDS];
-t_screen_state section;
 
 void setup() {
-  // check for an on-chip stored configuration from a previous run
-  state_init(&section);
-  if (state_load(&section)) {
-    setupLeds(section.width * section.height);
-    identify();
-  }
-
   for(int i = 0; i < MAX_LEDS; i++)
-    leds[i] = CRGB::Black;
+    leds[i] = CRGB::Green;
   flip_buffer();
   
   // setup serial connection
@@ -48,31 +36,21 @@ void loop() {
       handshake();
       byte end = mustRead();
       if (end != MSG_END) {
-        error("Invalid flip buffer ending");
+        error("Invalid MSG_HELLO ending");
       }
       break;
     }
       
     case MSG_SETUP: {
-      byte id = mustRead(), // section id
-           w  = mustRead(), // section width
-           h  = mustRead(), // section height
-           aw = mustRead(), // array width
-           ah = mustRead(); // array height
-           
-      if (state_set(&section, id, w, h, aw, ah)) {
-        state_save(&section);
-        
-        setupLeds(section.width * section.height);
-        identify();
+      byte count = mustRead();
+      setupLeds(count);
 
-        byte end = mustRead();
-        if (end != MSG_END) {
-          error("Invalid flip buffer ending");
-        }
-        
-        ack();
+      byte end = mustRead();
+      if (end != MSG_END) {
+        error("Invalid MSG_SETUP ending");
       }
+      ack();
+      
       break;
     }
 
@@ -81,7 +59,7 @@ void loop() {
       flip_buffer();
       byte end = mustRead();
       if (end != MSG_END) {
-        error("Invalid flip buffer ending");
+        error("Invalid MSG_FLIP_BUFFER ending");
       }
       
       ack();
@@ -116,31 +94,13 @@ void loop() {
         if (auto_show)
           flip_buffer();
       } else {
-        error("Invalid SetPixel ending");
+        error("Invalid MSG_SET_PIXELS ending");
       }
       
       ack();
       break;
     }
   }
-}
-
-void identify() {
-  clear();
-  
-  int i = 0;
-  for(int y = 0; y < section.array_height; y++) {
-    for(int x = 0; x < section.array_width; x++) {
-      int p = positionIndex(x,y);
-      if (i == section.id) {
-        leds[p] = CRGB::Green;
-      } else {
-        leds[p] = CRGB::Red;
-      }
-      i++;
-    }
-  }
-  flip_buffer();
 }
 
 void flip_buffer() {
@@ -156,4 +116,3 @@ void clear() {
   for(int i = 0; i < MAX_LEDS; i++)
     leds[i] = CRGB::Black;
 }
-
