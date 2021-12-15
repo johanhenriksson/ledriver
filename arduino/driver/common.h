@@ -17,13 +17,6 @@
 #define DATA_PIN        13
 #define MAX_LEDS        128
 #define SERIAL_RATE     115200
-#define DRIVER_VERSION  "ledriver prototype"
-
-#define ROM_HAS_CONFIG     0
-#define ROM_SECTION_ID     1
-#define ROM_SECTION_WIDTH  2
-#define ROM_SECTION_HEIGHT 3
-#define ROM_ARRAY_WIDTH    4
-#define ROM_ARRAY_HEIGHT   5
+#define DRIVER_VERSION  "ledriver 1.0"
 
 #endif
