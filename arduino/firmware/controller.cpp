@@ -25,7 +25,7 @@ void led_setup(int count) {
 }
 
 void led_set(int idx, CRGB color) {
-    if (idx > 0 && idx < MAX_LEDS) {
+    if (idx >= 0 && idx < MAX_LEDS) {
         _leds[idx] = color;
     }
 }
@@ -43,9 +43,6 @@ void led_show() {
 }
 
 void led_flash(CRGB color, int duration) {
-    led_clear(CRGB::Black);
-    led_show();
-    delay(duration);
     led_clear(color);
     led_show();
     delay(duration);

@@ -12,9 +12,10 @@ void setup() {
     led_init();
 
     // start by flashing all leds max green
-    led_flash(CRGB::Red, 500);
-    led_flash(CRGB::Green, 500);
-    led_flash(CRGB::Blue, 500);
+    led_flash(CRGB::Black, 300);
+    led_flash(CRGB::Red, 300);
+    led_flash(CRGB::Green, 300);
+    led_flash(CRGB::Blue, 300);
 
     // setup serial connection
     serial_init();
@@ -44,7 +45,7 @@ void loop() {
     // verify packet ending
     byte ending = serial_read();
     if (ending != MSG_END) {
-        serial_error("invalid packet ending");
+        serial_error("invalid packet 0x%x", cmd);
         return;
     }
 

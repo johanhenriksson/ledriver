@@ -9,12 +9,7 @@ char error_msg_buffer[ERROR_BUFFER_SIZE];
 // initializes the serial connection
 void serial_init() {
   Serial.begin(SERIAL_RATE);
-
-  // clear input
-  // not sure why this is here
-  while(Serial.available() > 0) {
-    Serial.read();
-  }
+  Serial.write(MSG_START);
 }
 
 // blocks until a byte is available on the serial connection, then returns it
@@ -40,6 +35,7 @@ void serial_error(const char* format, ...) {
     va_end(argptr);
 
     Serial.write(MSG_ERROR);
-    Serial.println(error_msg_buffer);
+    Serial.write(strlen(error_msg_buffer));
+    Serial.print(error_msg_buffer);
     Serial.flush();
 }
